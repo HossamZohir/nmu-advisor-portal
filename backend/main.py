@@ -13,7 +13,11 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "https://nmu-advisor-portal.vercel.app"],
+    allow_origins=[
+        "http://localhost:5173",
+        "https://nmu-advisor-portal.vercel.app",
+        "https://nmu-advisor-portal-af4jb0ia7-hossamzohirs-projects.vercel.app",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
