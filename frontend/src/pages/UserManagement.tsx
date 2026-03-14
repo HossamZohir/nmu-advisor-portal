@@ -13,11 +13,6 @@ interface User {
   department_name: string | null
 }
 
-interface Department {
-  id: string
-  name_en: string
-}
-
 const roleColors: Record<string, { color: string; bg: string; border: string }> = {
   dean: { color: '#7c3aed', bg: '#f5f3ff', border: '#ddd6fe' },
   dept_admin: { color: '#2563eb', bg: '#eff6ff', border: '#bfdbfe' },
@@ -28,7 +23,6 @@ export default function UserManagement() {
   const navigate = useNavigate()
   const { user: currentUser } = useAuthStore()
   const [users, setUsers] = useState<User[]>([])
-  const [departments, setDepartments] = useState<Department[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editUser, setEditUser] = useState<User | null>(null)
@@ -52,12 +46,8 @@ export default function UserManagement() {
   const fetchData = async () => {
     try {
       setLoading(true)
-      const [usersRes, deptRes] = await Promise.all([
-        api.get('/users'),
-        api.get('/departments').catch(() => ({ data: [] }))
-      ])
+      const usersRes = await api.get('/users')
       setUsers(usersRes.data)
-      setDepartments(deptRes.data)
     } catch (err) {
       console.error(err)
     } finally {
@@ -194,7 +184,6 @@ export default function UserManagement() {
           </div>
         </div>
 
-        {/* Success/Error */}
         {success && <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-green-700 text-sm mb-4">{success}</div>}
         {error && <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-red-600 text-sm mb-4">{error}</div>}
 

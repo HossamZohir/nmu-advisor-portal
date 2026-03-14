@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuthStore } from '../store/auth'
 import api from '../api/client'
 
 interface Semester {
@@ -19,20 +18,12 @@ interface Course {
   prerequisites: string[]
 }
 
-interface Program {
-  id: string
-  name_en: string
-}
-
 export default function SemesterManagement() {
   const navigate = useNavigate()
-  const { user } = useAuthStore()
   const [semesters, setSemesters] = useState<Semester[]>([])
   const [activeSemester, setActiveSemester] = useState<Semester | null>(null)
   const [allCourses, setAllCourses] = useState<Course[]>([])
   const [activatedCourses, setActivatedCourses] = useState<Course[]>([])
-  const [programs, setPrograms] = useState<Program[]>([])
-  const [selectedProgram, setSelectedProgram] = useState<string>('all')
   const [courseSearch, setCourseSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const [activating, setActivating] = useState(false)
@@ -48,14 +39,12 @@ export default function SemesterManagement() {
   const fetchData = async () => {
     try {
       setLoading(true)
-      const [semRes, coursesRes, programsRes] = await Promise.all([
+      const [semRes, coursesRes] = await Promise.all([
         api.get('/semesters'),
         api.get('/courses'),
-        api.get('/programs'),
       ])
       setSemesters(semRes.data)
       setAllCourses(coursesRes.data)
-      setPrograms(programsRes.data)
 
       const active = semRes.data.find((s: Semester) => s.is_active)
       if (active) {
@@ -130,13 +119,9 @@ export default function SemesterManagement() {
     }
   }
 
-  const activateAllByProgram = async () => {
-    if (!activeSemester || selectedProgram === 'all') return
-    const programCourses = allCourses.filter(c => {
-      // We'll activate all courses that match the search/filter
-      return filteredCourses.some(fc => fc.id === c.id)
-    })
-    const notActivated = programCourses.filter(c => !activatedCourses.some(ac => ac.id === c.id))
+  const activateAllFiltered = async () => {
+    if (!activeSemester) return
+    const notActivated = filteredCourses.filter(c => !activatedCourses.some(ac => ac.id === c.id))
     if (notActivated.length === 0) {
       alert('All filtered courses are already activated')
       return
@@ -169,11 +154,10 @@ export default function SemesterManagement() {
     return true
   }
 
-  const filteredCourses = allCourses.filter(c => {
-    const matchSearch = c.name_en.toLowerCase().includes(courseSearch.toLowerCase()) ||
-      c.code.toLowerCase().includes(courseSearch.toLowerCase())
-    return matchSearch
-  })
+  const filteredCourses = allCourses.filter(c =>
+    c.name_en.toLowerCase().includes(courseSearch.toLowerCase()) ||
+    c.code.toLowerCase().includes(courseSearch.toLowerCase())
+  )
 
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return '—'
@@ -249,8 +233,6 @@ export default function SemesterManagement() {
         {/* ── SEMESTERS TAB ── */}
         {selectedTab === 'semesters' && (
           <div className="space-y-4">
-
-            {/* Active Semester Card */}
             {activeSemester && (
               <div className="bg-white rounded-2xl border-2 border-primary p-6">
                 <div className="flex items-center justify-between mb-4">
@@ -280,7 +262,6 @@ export default function SemesterManagement() {
                     )}
                   </div>
                 </div>
-
                 <div className="grid grid-cols-3 gap-4">
                   {[
                     { label: 'Window Opened', value: formatDate(activeSemester.window_open_at) },
@@ -296,7 +277,6 @@ export default function SemesterManagement() {
               </div>
             )}
 
-            {/* All Semesters List */}
             <div className="bg-white rounded-2xl border border-border overflow-hidden">
               <div className="px-6 py-4 border-b border-border">
                 <h2 className="text-text font-bold">All Semesters</h2>
@@ -351,8 +331,6 @@ export default function SemesterManagement() {
               </div>
             ) : (
               <div className="flex gap-6">
-
-                {/* Left — Available Courses */}
                 <div className="flex-1 bg-white rounded-2xl border border-border overflow-hidden">
                   <div className="px-5 py-4 border-b border-border">
                     <div className="flex items-center justify-between mb-3">
@@ -360,14 +338,12 @@ export default function SemesterManagement() {
                         <h2 className="text-text font-bold text-sm">All Courses</h2>
                         <p className="text-muted text-xs mt-0.5">{filteredCourses.length} courses</p>
                       </div>
-                      <button onClick={activateAllByProgram}
+                      <button onClick={activateAllFiltered}
                         className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white transition-all"
                         style={{ background: 'linear-gradient(135deg, #8B141E, #C8293A)' }}>
                         Activate All Filtered
                       </button>
                     </div>
-
-                    {/* Search */}
                     <div className="relative">
                       <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -410,7 +386,6 @@ export default function SemesterManagement() {
                   </div>
                 </div>
 
-                {/* Right — Activated Courses */}
                 <div className="w-72 flex-shrink-0">
                   <div className="bg-white rounded-2xl border border-border overflow-hidden">
                     <div className="px-5 py-4 border-b border-border flex items-center justify-between">
@@ -426,9 +401,7 @@ export default function SemesterManagement() {
                     </div>
                     <div className="divide-y divide-border max-h-[60vh] overflow-y-auto">
                       {activatedCourses.length === 0 ? (
-                        <div className="text-center py-8 text-muted text-xs">
-                          No courses activated yet
-                        </div>
+                        <div className="text-center py-8 text-muted text-xs">No courses activated yet</div>
                       ) : activatedCourses.map(course => (
                         <div key={course.id} className="flex items-center justify-between px-4 py-2.5">
                           <div>
@@ -460,9 +433,7 @@ export default function SemesterManagement() {
             <h2 className="text-text text-lg font-bold mb-2">Create New Semester</h2>
             <p className="text-muted text-sm mb-6">Enter a name for the new semester</p>
             <label className="text-text text-sm font-semibold block mb-2">Semester Name</label>
-            <input
-              type="text"
-              value={newSemesterName}
+            <input type="text" value={newSemesterName}
               onChange={(e) => setNewSemesterName(e.target.value)}
               placeholder="e.g. Fall 2026, Spring 2027"
               className="w-full border border-border rounded-xl px-4 py-3 text-text text-sm focus:outline-none focus:border-primary mb-6"
