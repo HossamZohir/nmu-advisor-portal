@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/auth'
 import api from '../api/client'
+import LanguageToggle from '../components/LanguageToggle'
+import { t } from '../i18n'
 
 interface Student {
   id: string
@@ -63,10 +65,10 @@ function getGPAColor(gpa: number) {
 
 function getStatusBadge(status: string | undefined) {
   switch (status) {
-    case 'submitted': return { label: 'Submitted', color: '#16a34a', bg: '#f0fdf4', border: '#bbf7d0' }
-    case 'locked': return { label: 'Locked', color: '#6b7280', bg: '#f9fafb', border: '#e5e7eb' }
-    case 'draft': return { label: 'In Progress', color: '#d97706', bg: '#fffbeb', border: '#fde68a' }
-    default: return { label: 'Not Started', color: '#dc2626', bg: '#fef2f2', border: '#fecaca' }
+    case 'submitted': return { label: t('submitted'), color: '#16a34a', bg: '#f0fdf4', border: '#bbf7d0' }
+    case 'locked': return { label: t('locked'), color: '#6b7280', bg: '#f9fafb', border: '#e5e7eb' }
+    case 'draft': return { label: t('in_progress'), color: '#d97706', bg: '#fffbeb', border: '#fde68a' }
+    default: return { label: t('not_started'), color: '#dc2626', bg: '#fef2f2', border: '#fecaca' }
   }
 }
 
@@ -125,16 +127,16 @@ function AdvisorDashboard() {
   return (
     <main className="max-w-7xl mx-auto px-6 py-8">
       <div className="mb-8">
-        <h1 className="text-text text-2xl font-bold">My Students</h1>
-        <p className="text-muted text-sm mt-1">Manage course registrations for your assigned students</p>
+        <h1 className="text-text text-2xl font-bold">{t('my_students')}</h1>
+        <p className="text-muted text-sm mt-1">{t('my_students_desc')}</p>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         {[
-          { label: 'Total Students', value: stats.total, icon: '👥', color: '#8B141E' },
-          { label: 'Submitted', value: stats.submitted, icon: '✅', color: '#16a34a' },
-          { label: 'In Progress', value: stats.inProgress, icon: '📝', color: '#d97706' },
-          { label: 'Not Started', value: stats.notStarted, icon: '⏳', color: '#6b7280' },
+          { label: t('total_students'), value: stats.total, icon: '👥', color: '#8B141E' },
+          { label: t('submitted'), value: stats.submitted, icon: '✅', color: '#16a34a' },
+          { label: t('in_progress'), value: stats.inProgress, icon: '📝', color: '#d97706' },
+          { label: t('not_started'), value: stats.notStarted, icon: '⏳', color: '#6b7280' },
         ].map((stat) => (
           <div key={stat.label} className="bg-white rounded-2xl p-5 border border-border">
             <div className="flex items-center justify-between mb-3">
@@ -150,7 +152,7 @@ function AdvisorDashboard() {
         <svg className="absolute left-4 top-1/2 -translate-y-1/2 text-muted" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
         </svg>
-        <input type="text" placeholder="Search by name or student ID..." value={search}
+        <input type="text" placeholder={t('search_students')} value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full bg-white border border-border rounded-xl pl-10 pr-4 py-3 text-text placeholder-muted text-sm focus:outline-none focus:border-primary transition-all"
         />
@@ -188,7 +190,7 @@ function AdvisorDashboard() {
                   </h3>
                   <p className="text-muted text-xs mb-4">{student.student_id}</p>
                   <div className="flex items-center justify-between pt-3 border-t border-border">
-                    <span className="text-muted text-xs">GPA</span>
+                    <span className="text-muted text-xs">{t('gpa')}</span>
                     <span className="text-xs font-bold px-2 py-0.5 rounded-lg border"
                       style={{ color: gpa.color, background: gpa.bg, borderColor: gpa.border }}>
                       {student.gpa.toFixed(2)}
@@ -200,12 +202,12 @@ function AdvisorDashboard() {
                     <button
                       onClick={() => updateFlag(student.id, 'sis_checked', !reg.sis_checked)}
                       className={`flex-1 text-xs px-2 py-1.5 rounded-lg font-medium transition-all border ${reg.sis_checked ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-400 border-gray-200 hover:border-green-300'}`}>
-                      SIS {reg.sis_checked ? '✓' : '✗'}
+                      {t('sis')} {reg.sis_checked ? '✓' : '✗'}
                     </button>
                     <button
                       onClick={() => updateFlag(student.id, 'payment_checked', !reg.payment_checked)}
                       className={`flex-1 text-xs px-2 py-1.5 rounded-lg font-medium transition-all border ${reg.payment_checked ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-400 border-gray-200 hover:border-green-300'}`}>
-                      Paid {reg.payment_checked ? '✓' : '✗'}
+                      {t('paid')} {reg.payment_checked ? '✓' : '✗'}
                     </button>
                   </div>
                 )}
@@ -324,22 +326,19 @@ function AdminDashboard() {
     <main className="max-w-7xl mx-auto px-6 py-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-text text-2xl font-bold">Advisors Tracking Dashboard</h1>
-          <p className="text-muted text-sm mt-1">Monitor registration progress across all advisors</p>
+          <h1 className="text-text text-2xl font-bold">{t('advisors_dashboard')}</h1>
+          <p className="text-muted text-sm mt-1">{t('advisors_dashboard_desc')}</p>
         </div>
         <div className="flex items-center gap-3">
-          {/* Import Button */}
           <label className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border border-border bg-white hover:bg-surface-2 transition-all cursor-pointer">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
               <polyline points="17 8 12 3 7 8"/>
               <line x1="12" y1="3" x2="12" y2="15"/>
             </svg>
-            Import Students
+            {t('import_students')}
             <input type="file" accept=".xlsx" className="hidden" onChange={handleImport} />
           </label>
-
-          {/* Assign Button */}
           {selectedStudents.length > 0 && (
             <button onClick={() => setShowAssignModal(true)}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-semibold"
@@ -349,20 +348,19 @@ function AdminDashboard() {
                 <circle cx="9" cy="7" r="4"/>
                 <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
               </svg>
-              Assign {selectedStudents.length} Students
+              {t('assign_students')} ({selectedStudents.length})
             </button>
           )}
         </div>
       </div>
 
-      {/* Summary Stats */}
       {summary && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {[
-            { label: 'Total Students', value: summary.total_students, icon: '👥', color: '#8B141E' },
-            { label: 'Registered', value: `${summary.total_registered} (${summary.total_students ? Math.round(summary.total_registered / summary.total_students * 100) : 0}%)`, icon: '✅', color: '#16a34a' },
-            { label: 'SIS Done', value: `${summary.total_sis} (${summary.total_students ? Math.round(summary.total_sis / summary.total_students * 100) : 0}%)`, icon: '🖥️', color: '#2563eb' },
-            { label: 'Paid', value: `${summary.total_paid} (${summary.total_students ? Math.round(summary.total_paid / summary.total_students * 100) : 0}%)`, icon: '💳', color: '#7c3aed' },
+            { label: t('total_students'), value: summary.total_students, icon: '👥', color: '#8B141E' },
+            { label: t('registered'), value: `${summary.total_registered} (${summary.total_students ? Math.round(summary.total_registered / summary.total_students * 100) : 0}%)`, icon: '✅', color: '#16a34a' },
+            { label: t('sis_done'), value: `${summary.total_sis} (${summary.total_students ? Math.round(summary.total_sis / summary.total_students * 100) : 0}%)`, icon: '🖥️', color: '#2563eb' },
+            { label: t('paid'), value: `${summary.total_paid} (${summary.total_students ? Math.round(summary.total_paid / summary.total_students * 100) : 0}%)`, icon: '💳', color: '#7c3aed' },
           ].map((stat) => (
             <div key={stat.label} className="bg-white rounded-2xl p-5 border border-border">
               <div className="flex items-center justify-between mb-3">
@@ -375,7 +373,6 @@ function AdminDashboard() {
         </div>
       )}
 
-      {/* Advisor Filter Pills */}
       <div className="bg-white rounded-2xl border border-border p-4 mb-6">
         <div className="flex items-center gap-2 flex-wrap">
           <button onClick={() => setSelectedAdvisor(null)}
@@ -384,7 +381,7 @@ function AdminDashboard() {
               background: !selectedAdvisor ? 'linear-gradient(135deg, #8B141E, #C8293A)' : '#F5F5F7',
               color: !selectedAdvisor ? 'white' : '#555'
             }}>
-            All Advisors
+            {t('all_advisors')}
           </button>
           {advisorStats.map(a => (
             <button key={a.advisor_id}
@@ -402,17 +399,16 @@ function AdminDashboard() {
         </div>
       </div>
 
-      {/* Students Table */}
       <div className="bg-white rounded-2xl border border-border overflow-hidden">
         <div className="px-6 py-4 border-b border-border flex items-center justify-between">
           <div>
             <h2 className="text-text font-bold">
               {selectedAdvisor
-                ? `Students — ${advisorStats.find(a => a.advisor_id === selectedAdvisor)?.advisor_name}`
-                : 'All Students'}
+                ? `${t('student')} — ${advisorStats.find(a => a.advisor_id === selectedAdvisor)?.advisor_name}`
+                : t('all_students')}
             </h2>
             <p className="text-muted text-xs mt-0.5">
-              {filteredStudents.length} students
+              {filteredStudents.length} {t('student')}
               {selectedStudents.length > 0 && (
                 <span className="ml-2 text-primary font-semibold">{selectedStudents.length} selected</span>
               )}
@@ -422,7 +418,7 @@ function AdminDashboard() {
             <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
-            <input type="text" placeholder="Search student..." value={search}
+            <input type="text" placeholder={t('search_student')} value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="bg-surface-2 border border-border rounded-xl pl-8 pr-3 py-2 text-text text-xs focus:outline-none focus:border-primary w-48"
             />
@@ -441,15 +437,15 @@ function AdminDashboard() {
                   />
                 </th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted">#</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-muted">Student</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted">{t('student')}</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted">ID</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-muted">Advisor</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-muted">GPA</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-muted">Registered Courses</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-muted">Hours</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold text-muted">SIS</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold text-muted">Paid</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-muted">Status</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted">{t('advisor')}</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted">{t('gpa')}</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted">{t('registered_courses')}</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted">{t('hours')}</th>
+                <th className="text-center px-4 py-3 text-xs font-semibold text-muted">{t('sis')}</th>
+                <th className="text-center px-4 py-3 text-xs font-semibold text-muted">{t('paid')}</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted">{t('status')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -535,17 +531,16 @@ function AdminDashboard() {
         </div>
       </div>
 
-      {/* Assign Modal */}
       {showAssignModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
           style={{ background: 'rgba(0,0,0,0.4)' }}>
           <div className="bg-white rounded-2xl p-8 w-full max-w-sm shadow-2xl animate-fade-in">
-            <h2 className="text-text text-lg font-bold mb-2">Assign Students</h2>
-            <p className="text-muted text-sm mb-6">Assign {selectedStudents.length} selected students to an advisor</p>
-            <label className="text-text text-sm font-semibold block mb-2">Select Advisor</label>
+            <h2 className="text-text text-lg font-bold mb-2">{t('assign_students')}</h2>
+            <p className="text-muted text-sm mb-6">{t('assign_students')} {selectedStudents.length}</p>
+            <label className="text-text text-sm font-semibold block mb-2">{t('select_advisor')}</label>
             <select value={assignAdvisorId} onChange={(e) => setAssignAdvisorId(e.target.value)}
               className="w-full border border-border rounded-xl px-4 py-3 text-text text-sm focus:outline-none focus:border-primary bg-white mb-6">
-              <option value="">Choose an advisor...</option>
+              <option value="">{t('choose_advisor')}</option>
               {advisors.map(a => (
                 <option key={a.id} value={a.id}>{a.name_en}</option>
               ))}
@@ -553,12 +548,12 @@ function AdminDashboard() {
             <div className="flex gap-3">
               <button onClick={() => setShowAssignModal(false)}
                 className="flex-1 py-3 rounded-xl border border-border text-text-2 text-sm font-semibold hover:bg-surface-2 transition-colors">
-                Cancel
+                {t('cancel')}
               </button>
               <button onClick={handleAssign} disabled={!assignAdvisorId || assigning}
                 className="flex-1 py-3 rounded-xl text-white text-sm font-semibold transition-all"
                 style={{ background: 'linear-gradient(135deg, #8B141E, #C8293A)', opacity: (!assignAdvisorId || assigning) ? 0.6 : 1 }}>
-                {assigning ? 'Assigning...' : 'Assign'}
+                {assigning ? t('assigning') : t('assign')}
               </button>
             </div>
           </div>
@@ -587,8 +582,8 @@ export default function Dashboard() {
             <img src="/faculty_logo.png" alt="NMU" className="w-9 h-9 object-contain" />
             <div className="w-px h-6 bg-border" />
             <div>
-              <p className="text-text text-sm font-bold leading-tight">NMU Advisor Portal</p>
-              <p className="text-muted text-xs leading-tight">Faculty of Engineering</p>
+              <p className="text-text text-sm font-bold leading-tight">{t('portal_name')}</p>
+              <p className="text-muted text-xs leading-tight">{t('faculty')}</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -608,9 +603,35 @@ export default function Dashboard() {
                   <circle cx="9" cy="7" r="4"/>
                   <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
                 </svg>
-                Users
+                {t('users')}
               </button>
             )}
+            {isAdmin && (
+              <button onClick={() => navigate('/reports')}
+                className="flex items-center gap-2 text-muted hover:text-primary text-sm transition-colors px-3 py-2 rounded-lg hover:bg-red-50">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                  <polyline points="10 9 9 9 8 9"/>
+                </svg>
+                {t('reports')}
+              </button>
+            )}
+            {isAdmin && (
+              <button onClick={() => navigate('/semesters')}
+                className="flex items-center gap-2 text-muted hover:text-primary text-sm transition-colors px-3 py-2 rounded-lg hover:bg-red-50">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                  <line x1="16" y1="2" x2="16" y2="6"/>
+                  <line x1="8" y1="2" x2="8" y2="6"/>
+                  <line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+                {t('semesters')}
+              </button>
+            )}
+            <LanguageToggle />
             <button onClick={handleLogout}
               className="flex items-center gap-2 text-muted hover:text-primary text-sm transition-colors px-3 py-2 rounded-lg hover:bg-red-50">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -618,7 +639,7 @@ export default function Dashboard() {
                 <polyline points="16 17 21 12 16 7"/>
                 <line x1="21" y1="12" x2="9" y2="12"/>
               </svg>
-              Logout
+              {t('logout')}
             </button>
           </div>
         </div>

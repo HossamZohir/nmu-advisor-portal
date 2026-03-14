@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
-from routers import auth, students, courses, registration, reports, users, departments
+from routers import auth, students, courses, registration, reports, users, departments, exports, programs
 
 load_dotenv()
 
@@ -26,6 +26,8 @@ app.include_router(registration.router)
 app.include_router(reports.router)
 app.include_router(users.router)
 app.include_router(departments.router)
+app.include_router(exports.router)
+app.include_router(programs.router)
 
 @app.get("/")
 def root():
