@@ -127,14 +127,12 @@ def import_students(
 ):
     db = get_db()
 
-    # Read Excel file
     contents = file.file.read()
     try:
         df = pd.read_excel(io.BytesIO(contents))
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Invalid Excel file: {str(e)}")
 
-    # Normalize column names
     df.columns = [c.strip().lower().replace(" ", "_") for c in df.columns]
 
     required_cols = ["student_id", "name_ar", "name_en", "program", "current_level", "gpa"]
@@ -148,6 +146,10 @@ def import_students(
     # Get all programs
     programs_result = db.table("programs").select("id, name_en").execute()
     program_map = {p["name_en"].strip(): p["id"] for p in programs_result.data}
+
+    # Get all advisors by email
+    advisors_result = db.table("users").select("id, email, name_en").eq("role", "advisor").execute()
+    advisor_map = {a["email"].strip().lower(): a["id"] for a in advisors_result.data}
 
     inserted = 0
     updated = 0
@@ -163,13 +165,21 @@ def import_students(
             current_level = int(row["current_level"])
             gpa = float(row["gpa"])
 
-            # Validate program
             if program_name not in program_map:
                 errors.append(f"Row {idx+2}: Program not found: {program_name}")
                 skipped += 1
                 continue
 
             program_id = program_map[program_name]
+
+            # Parse advisor email
+            advisor_id = None
+            if "advisor_email" in df.columns and pd.notna(row.get("advisor_email")):
+                advisor_email = str(row["advisor_email"]).strip().lower()
+                if advisor_email and advisor_email in advisor_map:
+                    advisor_id = advisor_map[advisor_email]
+                elif advisor_email:
+                    errors.append(f"Row {idx+2}: Advisor email not found: {advisor_email}")
 
             # Parse passed/failed courses
             passed = []
@@ -190,15 +200,13 @@ def import_students(
                 "failed_courses": failed,
             }
 
-            # Check if exists
-            existing = db.table("students").select("id").eq(
-                "student_id", student_id
-            ).execute()
+            if advisor_id:
+                student_data["advisor_id"] = advisor_id
+
+            existing = db.table("students").select("id").eq("student_id", student_id).execute()
 
             if existing.data:
-                db.table("students").update(student_data).eq(
-                    "student_id", student_id
-                ).execute()
+                db.table("students").update(student_data).eq("student_id", student_id).execute()
                 updated += 1
             else:
                 student_data["id"] = str(uuid.uuid4())
@@ -209,7 +217,6 @@ def import_students(
             errors.append(f"Row {idx+2}: {str(e)}")
             skipped += 1
 
-    # Log action
     db.table("audit_log").insert({
         "user_id": user["id"],
         "action": "IMPORT_STUDENTS",
@@ -225,3 +232,4 @@ def import_students(
         skipped=skipped,
         errors=errors[:20]
     )
+    
