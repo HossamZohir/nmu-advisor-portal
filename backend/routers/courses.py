@@ -44,10 +44,15 @@ def get_all_courses(user=Depends(get_current_user)):
 
 
 @router.get("/courses/semester/{semester_id}", response_model=list[CourseOut])
-def get_semester_courses(semester_id: str, user=Depends(get_current_user)):
-    """Get all activated courses for a specific semester"""
+def get_semester_courses(
+    semester_id: str,
+    program_id: str = None,
+    user=Depends(get_current_user)
+):
+    """Get activated courses for a semester, optionally filtered by program"""
     db = get_db()
 
+    # Get activated course IDs for this semester
     result = db.table("semester_courses").select(
         "course_id, courses(id, code, name_en, name_ar, credit_hours)"
     ).eq("semester_id", semester_id).execute()
@@ -66,18 +71,32 @@ def get_semester_courses(semester_id: str, user=Depends(get_current_user)):
         if code:
             prereq_map[cid].append(code)
 
+    # If program_id provided, get course IDs in that program
+    program_course_ids = None
+    if program_id:
+        pc_result = db.table("program_courses").select("course_id").eq(
+            "program_id", program_id
+        ).execute()
+        program_course_ids = {pc["course_id"] for pc in pc_result.data}
+
     courses = []
     for sc in result.data:
         c = sc.get("courses", {})
-        if c:
-            courses.append(CourseOut(
-                id=c["id"],
-                code=c["code"],
-                name_en=c["name_en"],
-                name_ar=c.get("name_ar"),
-                credit_hours=c["credit_hours"],
-                prerequisites=prereq_map.get(c["id"], [])
-            ))
+        if not c:
+            continue
+
+        # Filter by program if specified
+        if program_course_ids is not None and c["id"] not in program_course_ids:
+            continue
+
+        courses.append(CourseOut(
+            id=c["id"],
+            code=c["code"],
+            name_en=c["name_en"],
+            name_ar=c.get("name_ar"),
+            credit_hours=c["credit_hours"],
+            prerequisites=prereq_map.get(c["id"], [])
+        ))
 
     return courses
 
