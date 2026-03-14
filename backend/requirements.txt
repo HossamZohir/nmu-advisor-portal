@@ -1,12 +1,14 @@
-cd C:\Users\Admin\Documents\nmu-advisor-portal\backend
-venv\Scripts\activate
-pip freeze > requirements.txt
-```
-
----
-
-### Step 2 — Create `backend/Procfile`
-
-Create a new file called `Procfile` (no extension) inside the `backend` folder:
-```
-web: uvicorn main:app --host 0.0.0.0 --port $PORT
+fastapi
+uvicorn
+sqlalchemy
+alembic
+psycopg2-binary
+python-jose[cryptography]
+passlib
+bcrypt==4.0.1
+python-multipart
+pandas
+openpyxl
+supabase
+python-dotenv
+httpx
