@@ -16,6 +16,7 @@ export const translations = {
     reports: 'Reports',
     semesters: 'Semesters',
     logout: 'Logout',
+    locked: 'Locked',
 
     // Advisor Dashboard
     my_students: 'My Students',
@@ -89,6 +90,7 @@ export const translations = {
     reports: 'التقارير',
     semesters: 'الفصول الدراسية',
     logout: 'تسجيل الخروج',
+    locked: 'مقفل',
 
     // Advisor Dashboard
     my_students: 'طلابي',
@@ -148,7 +150,6 @@ export const translations = {
 }
 
 export type Lang = 'en' | 'ar'
-export type TranslationKey = keyof typeof translations.en
 
 export function getLang(): Lang {
   return (localStorage.getItem('language') || 'en') as Lang
@@ -160,9 +161,9 @@ export function setLang(lang: Lang) {
   document.documentElement.lang = lang
 }
 
-export function t(key: TranslationKey): string {
+export function t(key: string): string {
   const lang = getLang()
-  return translations[lang][key] || translations.en[key] || key
+  return (translations[lang] as any)?.[key] || (translations.en as any)?.[key] || key
 }
 
 const i18n = {
