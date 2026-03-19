@@ -327,3 +327,47 @@ def update_flags(
     }).execute()
 
     return build_registration_out(reg, db)
+
+
+@router.post("/student/{student_id}/reset")
+def reset_registration(student_id: str, user=Depends(get_current_user)):
+    db = get_db()
+
+    semester_result = db.table("semesters").select("*").eq("is_active", True).execute()
+    if not semester_result.data:
+        raise HTTPException(status_code=404, detail="No active semester found")
+
+    semester = semester_result.data[0]
+
+    reg_result = db.table("registrations").select("*").eq(
+        "student_id", student_id
+    ).eq("semester_id", semester["id"]).execute()
+
+    if not reg_result.data:
+        raise HTTPException(status_code=404, detail="No registration found for student")
+
+    reg = reg_result.data[0]
+
+    if reg["status"] == "locked":
+        raise HTTPException(status_code=403, detail="Registration is locked and cannot be reset")
+
+    # Delete all registration courses
+    db.table("registration_courses").delete().eq("registration_id", reg["id"]).execute()
+
+    # Reset to draft — keep sis and payment flags untouched
+    db.table("registrations").update({
+        "status": "draft",
+        "submitted_at": None,
+        "submitted_by": None,
+        "total_credit_hours": 0,
+    }).eq("id", reg["id"]).execute()
+
+    db.table("audit_log").insert({
+        "user_id": user["id"],
+        "action": "RESET_REGISTRATION",
+        "target_type": "registration",
+        "target_id": reg["id"],
+        "detail": {"student_id": student_id}
+    }).execute()
+
+    return {"message": "Registration reset successfully"}

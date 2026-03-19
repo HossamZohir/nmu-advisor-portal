@@ -55,6 +55,7 @@ export default function Registration() {
   const [adding, setAdding] = useState<string | null>(null)
   const [removing, setRemoving] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState('')
   const [successMsg, setSuccessMsg] = useState('')
 
@@ -123,6 +124,21 @@ export default function Registration() {
       setError(err.response?.data?.detail || 'Failed to submit')
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  const deleteRegistration = async () => {
+    if (!confirm('This will delete all selected courses and reset the registration to draft. Continue?')) return
+    setDeleting(true)
+    setError('')
+    try {
+      await api.post(`/registrations/student/${studentId}/reset`)
+      await fetchAll()
+      showSuccess('Registration deleted successfully')
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to delete registration')
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -400,8 +416,9 @@ export default function Registration() {
 
           {/* Error / Success */}
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-red-600 text-xs print:hidden">
-              {error}
+            <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-red-600 text-xs print:hidden flex items-center justify-between">
+              <span>{error}</span>
+              <button onClick={() => setError('')} className="text-red-400 hover:text-red-600 font-bold">✕</button>
             </div>
           )}
           {successMsg && (
@@ -423,32 +440,61 @@ export default function Registration() {
             </button>
           )}
 
-          {/* Submit Button */}
-          {canEdit && !isSubmitted && (
-            <button onClick={submitRegistration}
-              disabled={submitting || !registration?.courses.length}
-              className="w-full py-3.5 rounded-xl font-semibold text-white text-sm transition-all flex items-center justify-center gap-2 print:hidden"
-              style={{
-                background: (!registration?.courses.length) ? '#ccc' : 'linear-gradient(135deg, #8B141E, #C8293A)',
-                boxShadow: (!registration?.courses.length) ? 'none' : '0 4px 15px rgba(139,20,30,0.25)',
-                cursor: (!registration?.courses.length) ? 'not-allowed' : 'pointer'
-              }}>
-              {submitting ? (
-                <>
-                  <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="12" r="10" stroke="white" strokeWidth="3" strokeOpacity="0.3"/>
-                    <path d="M12 2a10 10 0 0110 10" stroke="white" strokeWidth="3" strokeLinecap="round"/>
-                  </svg>
-                  Submitting...
-                </>
-              ) : 'Submit Registration'}
-            </button>
-          )}
-
-          {isSubmitted && (
-            <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-green-700 text-sm text-center font-semibold print:hidden">
-              ✅ Registration Submitted
-            </div>
+          {/* Main Action Button — Submit or Delete Registration */}
+          {!isLocked && activeSemester && (
+            <>
+              {!isSubmitted ? (
+                <button onClick={submitRegistration}
+                  disabled={submitting || !registration?.courses.length}
+                  className="w-full py-3.5 rounded-xl font-semibold text-white text-sm transition-all flex items-center justify-center gap-2 print:hidden"
+                  style={{
+                    background: (!registration?.courses.length) ? '#ccc' : 'linear-gradient(135deg, #8B141E, #C8293A)',
+                    boxShadow: (!registration?.courses.length) ? 'none' : '0 4px 15px rgba(139,20,30,0.25)',
+                    cursor: (!registration?.courses.length) ? 'not-allowed' : 'pointer'
+                  }}>
+                  {submitting ? (
+                    <>
+                      <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="10" stroke="white" strokeWidth="3" strokeOpacity="0.3"/>
+                        <path d="M12 2a10 10 0 0110 10" stroke="white" strokeWidth="3" strokeLinecap="round"/>
+                      </svg>
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                      Submit Registration
+                    </>
+                  )}
+                </button>
+              ) : (
+                <button onClick={deleteRegistration}
+                  disabled={deleting}
+                  className="w-full py-3.5 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 print:hidden border-2 border-red-300 bg-red-50 hover:bg-red-100 text-red-600">
+                  {deleting ? (
+                    <>
+                      <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="10" stroke="#dc2626" strokeWidth="3" strokeOpacity="0.3"/>
+                        <path d="M12 2a10 10 0 0110 10" stroke="#dc2626" strokeWidth="3" strokeLinecap="round"/>
+                      </svg>
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <polyline points="3 6 5 6 21 6"/>
+                        <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
+                        <path d="M10 11v6M14 11v6"/>
+                        <path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
+                      </svg>
+                      Delete Registration
+                    </>
+                  )}
+                </button>
+              )}
+            </>
           )}
 
           {isLocked && (
