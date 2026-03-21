@@ -254,3 +254,23 @@ def deactivate_course(
         "semester_id", semester_id
     ).eq("course_id", course_id).execute()
     return {"message": "Course deactivated"}
+
+
+@router.delete("/semesters/{semester_id}")
+def delete_semester(semester_id: str, user=Depends(require_admin)):
+    db = get_db()
+
+    # Check semester exists
+    sem = db.table("semesters").select("*").eq("id", semester_id).execute()
+    if not sem.data:
+        raise HTTPException(status_code=404, detail="Semester not found")
+
+    if sem.data[0]["is_active"]:
+        raise HTTPException(status_code=400, detail="Cannot delete the active semester")
+
+    # Delete related data first
+    db.table("semester_courses").delete().eq("semester_id", semester_id).execute()
+    db.table("registrations").delete().eq("semester_id", semester_id).execute()
+    db.table("semesters").delete().eq("id", semester_id).execute()
+
+    return {"message": "Semester deleted successfully"}    

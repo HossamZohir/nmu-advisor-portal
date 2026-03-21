@@ -51,6 +51,9 @@ export default function SemesterManagement() {
         setActiveSemester(active)
         const activatedRes = await api.get(`/courses/semester/${active.id}`)
         setActivatedCourses(activatedRes.data)
+      } else {
+        setActiveSemester(null)
+        setActivatedCourses([])
       }
     } catch (err) {
       console.error(err)
@@ -86,6 +89,17 @@ export default function SemesterManagement() {
       alert(err.response?.data?.detail || 'Failed to activate')
     } finally {
       setActivating(false)
+    }
+  }
+
+  const deleteSemester = async (semesterId: string, semesterName: string) => {
+    if (!confirm(`Delete "${semesterName}"? This will also delete all registrations for this semester. This cannot be undone.`)) return
+    try {
+      await api.delete(`/semesters/${semesterId}`)
+      showSuccess(`"${semesterName}" deleted successfully`)
+      fetchData()
+    } catch (err: any) {
+      alert(err.response?.data?.detail || 'Failed to delete semester')
     }
   }
 
@@ -149,7 +163,6 @@ export default function SemesterManagement() {
     if (now < openAt) return false
     if (activeSemester.window_close_at) {
       const closeAt = new Date(activeSemester.window_close_at)
-      // Only consider closed if close date is AFTER the open date
       if (closeAt > openAt && now > closeAt) return false
     }
     return true
@@ -330,10 +343,16 @@ export default function SemesterManagement() {
                         <td className="px-6 py-4 text-text-2 text-xs">{formatDate(sem.window_close_at)}</td>
                         <td className="px-6 py-4 text-right">
                           {!sem.is_active && (
-                            <button onClick={() => activateSemester(sem.id)} disabled={activating}
-                              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary text-white hover:opacity-90 transition-all">
-                              Set Active
-                            </button>
+                            <div className="flex items-center justify-end gap-2">
+                              <button onClick={() => activateSemester(sem.id)} disabled={activating}
+                                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary text-white hover:opacity-90 transition-all">
+                                Set Active
+                              </button>
+                              <button onClick={() => deleteSemester(sem.id, sem.name)}
+                                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition-all">
+                                Delete
+                              </button>
+                            </div>
                           )}
                         </td>
                       </tr>
