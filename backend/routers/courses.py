@@ -183,14 +183,14 @@ def toggle_registration_window(
 
     if action == "open":
         db.table("semesters").update({
-            "window_open_at": datetime.now(timezone.utc).isoformat()
+            "window_open_at": datetime.now(timezone.utc).isoformat(),
+            "window_close_at": None,
         }).eq("id", semester_id).execute()
         msg = "Registration window opened"
     elif action == "close":
         db.table("semesters").update({
             "window_close_at": datetime.now(timezone.utc).isoformat()
         }).eq("id", semester_id).execute()
-        # Lock all submitted registrations
         db.table("registrations").update(
             {"status": "locked"}
         ).eq("semester_id", semester_id).eq("status", "submitted").execute()
