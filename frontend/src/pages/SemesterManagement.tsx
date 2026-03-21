@@ -149,7 +149,8 @@ export default function SemesterManagement() {
     if (now < openAt) return false
     if (activeSemester.window_close_at) {
       const closeAt = new Date(activeSemester.window_close_at)
-      if (now > closeAt) return false
+      // Only consider closed if close date is AFTER the open date
+      if (closeAt > openAt && now > closeAt) return false
     }
     return true
   }
@@ -242,9 +243,13 @@ export default function SemesterManagement() {
                     <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-green-50 text-green-700 border border-green-200">
                       Active
                     </span>
-                    {isWindowOpen() && (
+                    {isWindowOpen() ? (
                       <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
                         🟢 Window Open
+                      </span>
+                    ) : (
+                      <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-red-50 text-red-600 border border-red-200">
+                        🔴 Window Closed
                       </span>
                     )}
                   </div>
@@ -287,34 +292,53 @@ export default function SemesterManagement() {
                   <tr className="bg-surface-2 border-b border-border">
                     <th className="text-left px-6 py-3 text-xs font-semibold text-muted">Semester</th>
                     <th className="text-left px-6 py-3 text-xs font-semibold text-muted">Status</th>
+                    <th className="text-left px-6 py-3 text-xs font-semibold text-muted">Window</th>
                     <th className="text-left px-6 py-3 text-xs font-semibold text-muted">Window Opened</th>
                     <th className="text-left px-6 py-3 text-xs font-semibold text-muted">Window Closed</th>
                     <th className="text-right px-6 py-3 text-xs font-semibold text-muted">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {semesters.map(sem => (
-                    <tr key={sem.id} className="hover:bg-surface-2 transition-colors">
-                      <td className="px-6 py-4">
-                        <p className="text-text text-sm font-semibold">{sem.name}</p>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${sem.is_active ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-100 text-gray-500 border-gray-200'}`}>
-                          {sem.is_active ? 'Active' : 'Inactive'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-text-2 text-xs">{formatDate(sem.window_open_at)}</td>
-                      <td className="px-6 py-4 text-text-2 text-xs">{formatDate(sem.window_close_at)}</td>
-                      <td className="px-6 py-4 text-right">
-                        {!sem.is_active && (
-                          <button onClick={() => activateSemester(sem.id)} disabled={activating}
-                            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary text-white hover:opacity-90 transition-all">
-                            Set Active
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                  {semesters.map(sem => {
+                    const semWindowOpen = (() => {
+                      if (!sem.window_open_at) return false
+                      const now = new Date()
+                      const openAt = new Date(sem.window_open_at)
+                      if (now < openAt) return false
+                      if (sem.window_close_at) {
+                        const closeAt = new Date(sem.window_close_at)
+                        if (closeAt > openAt && now > closeAt) return false
+                      }
+                      return true
+                    })()
+                    return (
+                      <tr key={sem.id} className="hover:bg-surface-2 transition-colors">
+                        <td className="px-6 py-4">
+                          <p className="text-text text-sm font-semibold">{sem.name}</p>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${sem.is_active ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-100 text-gray-500 border-gray-200'}`}>
+                            {sem.is_active ? 'Active' : 'Inactive'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${semWindowOpen ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-red-50 text-red-600 border-red-200'}`}>
+                            {semWindowOpen ? '🟢 Open' : '🔴 Closed'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-text-2 text-xs">{formatDate(sem.window_open_at)}</td>
+                        <td className="px-6 py-4 text-text-2 text-xs">{formatDate(sem.window_close_at)}</td>
+                        <td className="px-6 py-4 text-right">
+                          {!sem.is_active && (
+                            <button onClick={() => activateSemester(sem.id)} disabled={activating}
+                              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary text-white hover:opacity-90 transition-all">
+                              Set Active
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>
